@@ -3,6 +3,7 @@ const Aedes = require('aedes')
 const { createServer } = require('net')
 const { cpus } = require('os')
 const MONGO_URL = 'mongodb://127.0.0.1/aedes-clusters'
+const { MongoClient } = require("mongodb");
 
 const mq = process.env.MQ === 'redis'
   ? require('mqemitter-redis')({
@@ -20,7 +21,13 @@ const persistence = process.env.PERSISTENCE === 'redis'
     url: MONGO_URL
   })
 
-function startAedes () {
+function startAedes() {
+
+  // const uri = "mongodb://localhost:27017";
+  // const clientmongo = new MongoClient(uri);
+  // const database = clientmongo.db("insertDB");
+  // const haiku = database.collection("haiku");
+
   const port = 1883
 
   const aedes = Aedes({
@@ -43,12 +50,12 @@ function startAedes () {
 
   aedes.on('subscribe', function (subscriptions, client) {
     console.log('MQTT client \x1b[32m' + (client ? client.id : client) +
-            '\x1b[0m subscribed to topics: ' + subscriptions.map(s => s.topic).join('\n'), 'from broker', aedes.id)
+      '\x1b[0m subscribed to topics: ' + subscriptions.map(s => s.topic).join('\n'), 'from broker', aedes.id)
   })
 
   aedes.on('unsubscribe', function (subscriptions, client) {
     console.log('MQTT client \x1b[32m' + (client ? client.id : client) +
-            '\x1b[0m unsubscribed to topics: ' + subscriptions.join('\n'), 'from broker', aedes.id)
+      '\x1b[0m unsubscribed to topics: ' + subscriptions.join('\n'), 'from broker', aedes.id)
   })
 
   // fired when a client connects
@@ -64,6 +71,21 @@ function startAedes () {
   // fired when a message is published
   aedes.on('publish', async function (packet, client) {
     console.log('Client \x1b[31m' + (client ? client.id : 'BROKER_' + aedes.id) + '\x1b[0m has published', packet.payload.toString(), 'on', packet.topic, 'to broker', aedes.id)
+
+    if (packet.topic.includes('data/update')) {
+      // console.table(Buffer.from(packet.payload, 'base64').toString());
+      const datapayload = JSON.parse(Buffer.from(packet.payload, 'base64').toString());
+      datapayload.time = Date();
+
+      const uri = "mongodb://localhost:27017";
+      const clientmongo = new MongoClient(uri);
+      const database = clientmongo.db("insertDB");
+      const haiku = database.collection(client.id);
+
+      const result = await haiku.insertOne(datapayload);
+      console.log(`A document was inserted with the _id: ${result.insertedId}`);
+    }
+
   })
 }
 
