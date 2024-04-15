@@ -5,28 +5,15 @@ const { cpus } = require('os')
 const MONGO_URL = 'mongodb://127.0.0.1/aedes-clusters'
 const { MongoClient } = require("mongodb");
 
-const mq = process.env.MQ === 'redis'
-  ? require('mqemitter-redis')({
-    port: process.env.REDIS_PORT || 6379
-  })
-  : require('mqemitter-mongodb')({
+const mq = require('mqemitter-mongodb')({
     url: MONGO_URL
   })
 
-const persistence = process.env.PERSISTENCE === 'redis'
-  ? require('aedes-persistence-redis')({
-    port: process.env.REDIS_PORT || 6379
-  })
-  : require('aedes-persistence-mongodb')({
-    url: MONGO_URL
-  })
+const persistence = require('aedes-persistence-mongodb')({
+  url: MONGO_URL
+})
 
 function startAedes() {
-
-  // const uri = "mongodb://localhost:27017";
-  // const clientmongo = new MongoClient(uri);
-  // const database = clientmongo.db("insertDB");
-  // const haiku = database.collection("haiku");
 
   const port = 1883
 
@@ -83,6 +70,8 @@ function startAedes() {
       const haiku = database.collection(client.id);
 
       const result = await haiku.insertOne(datapayload);
+      clientmongo.close();
+
       console.log(`A document was inserted with the _id: ${result.insertedId}`);
     }
 
