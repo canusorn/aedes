@@ -5,6 +5,10 @@ const { cpus } = require('os')
 const MONGO_URL = 'mongodb://127.0.0.1/aedes-clusters'
 const { MongoClient } = require("mongodb");
 
+const express = require('express')
+const app = express()
+const port = 3000
+
 const mq = require('mqemitter-mongodb')({
     url: MONGO_URL
   })
@@ -12,6 +16,12 @@ const mq = require('mqemitter-mongodb')({
 const persistence = require('aedes-persistence-mongodb')({
   url: MONGO_URL
 })
+
+app.get('/', (req, res) => {
+  res.send('Hello World!')
+})
+
+
 
 function startAedes() {
 
@@ -95,4 +105,8 @@ if (cluster.isMaster) {
   })
 } else {
   startAedes()
+
+  app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+  })
 }
