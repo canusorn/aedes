@@ -1,5 +1,5 @@
 <template>
-    <Line id="my-chart-id" :options="chartOptions" :data="chartData" />
+    <Line id="my-chart-id" v-if="loaded" :options="chartOptions" :data="chartData" />
 </template>
 
 <script>
@@ -27,14 +27,24 @@ export default {
     components: { Line },
     data() {
         return {
-            chartData: {
-                labels: ['January', 'February', 'March'],
-                datasets: [{ data: [40, 20, 12] }]
-            },
-            chartOptions: {
-                responsive: true
-            }
+            loaded: false,
+            chartData: null
+            // labels: ['January', 'February', 'March'],
+            // datasets: [{ data: [40, 20, 12] }]
         }
+    },
+    async mounted () {
+    this.loaded = false
+
+    try {
+      const { userlist } = await fetch('/api')
+      this.chartdata = userlist
+
+      this.loaded = true
+    } catch (e) {
+      console.error(e)
     }
+  }
+
 }
 </script>

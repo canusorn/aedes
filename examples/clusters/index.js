@@ -18,7 +18,7 @@ const persistence = require('aedes-persistence-mongodb')({
 })
 
 async function httpGetAll(req, res) {
-  var dataout
+  var dataout={temp:[],time:[]}
 
   console.log('***********httpGetAll************');
 
@@ -30,18 +30,41 @@ async function httpGetAll(req, res) {
       const database = client.db("insertDB");
       const movies = database.collection("7884150");
 
-      // Query for all documents
+
+      // Query for movies that have a runtime less than 15 minutes
       const query = {};
+      const options = {
+        // Sort returned documents in ascending order by title (A->Z)
+        sort: { time: 1 },
+        projection: { _id: 0, temp: 1, time: 1 },
+      };
+      // Execute query 
+      const cursor = movies.find(query, options);
+      // Print a message if no documents were found
+      if ((await movies.countDocuments(query)) === 0) {
+        console.log("No documents found!");
+      }
+      // Print returned documents
+      // for await (const doc of cursor) {
+      //   console.dir(doc);
+      // }
 
-      // Execute query
-      const cursor = await movies.findOne(query);
+      const data = await cursor.toArray();
 
-      dataout = cursor;
-      console.table(cursor);
-      // Print recursor.next();next();documents
-      // await cursor.forEach(console.log);
+      // console.dir(dataout);
+let tm = [];
+let ti = [];
+      data.forEach((document) => {
+        console.log(document.temp)
+        tm.push(document.temp)
+        ti.push(document.time);
+      });
+dataout.temp = tm;
+dataout.time = ti;
+
+
     } finally {
-      client.close();
+      await client.close();
     }
   }
 
@@ -99,7 +122,7 @@ function startAedes() {
     if (packet.topic.includes('data/update')) {
       // console.table(Buffer.from(packet.payload, 'base64').toString());
       const datapayload = JSON.parse(Buffer.from(packet.payload, 'base64').toString());
-      datapayload.time = Date();
+      datapayload.time = new Date();
 
       const uri = "mongodb://localhost:27017";
       const clientmongo = new MongoClient(uri);
