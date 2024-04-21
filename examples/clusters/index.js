@@ -10,18 +10,45 @@ const app = express()
 const port = 3000
 
 const mq = require('mqemitter-mongodb')({
-    url: MONGO_URL
-  })
+  url: MONGO_URL
+})
 
 const persistence = require('aedes-persistence-mongodb')({
   url: MONGO_URL
 })
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+async function httpGetAll(req, res) {
+  var dataout
 
+  console.log('***********httpGetAll************');
 
+  const uri = "mongodb://localhost:27017";
+  const client = new MongoClient(uri);
+  async function run() {
+    try {
+      // Get the database and collection on which to run the operation
+      const database = client.db("insertDB");
+      const movies = database.collection("7884150");
+
+      // Query for all documents
+      const query = {};
+
+      // Execute query
+      const cursor = await movies.findOne(query);
+
+      dataout = cursor;
+      console.table(cursor);
+      // Print recursor.next();next();documents
+      // await cursor.forEach(console.log);
+    } finally {
+      client.close();
+    }
+  }
+
+  await run().catch(console.dir);
+
+  return res.status(200).json(dataout);
+}
 
 function startAedes() {
 
@@ -105,6 +132,13 @@ if (cluster.isMaster) {
   })
 } else {
   startAedes()
+
+  app.use(express.json());
+
+  app.get('/', (req, res) => {
+    res.send('Hello World!')
+  })
+  app.get('/api', httpGetAll);
 
   app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
