@@ -1,50 +1,56 @@
 <template>
-    <Line id="my-chart-id" v-if="loaded" :options="chartOptions" :data="chartData" />
+  <div class="container">
+    <Line id="my-chart-id" v-if="loaded" :data="chartData" />
+  </div>
 </template>
 
 <script>
 import { Line } from 'vue-chartjs'
 import {
-    Chart as ChartJS, CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
+  Chart as ChartJS, CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
 } from 'chart.js'
 
 ChartJS.register(CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend)
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend)
 
 export default {
-    name: 'BarChart',
-    components: { Line },
-    data() {
-        return {
-            loaded: false,
-            chartData: null
-            // labels: ['January', 'February', 'March'],
-            // datasets: [{ data: [40, 20, 12] }]
-        }
-    },
-    async mounted () {
+  name: 'BarChart',
+  components: { Line },
+  data() {
+    return {
+      loaded: false,
+      chartData: null
+    }
+  },
+  async mounted() {
+
     this.loaded = false
 
-    try {
-      const { userlist } = await fetch('/api')
-      this.chartdata = userlist
+    fetch("http://192.168.0.101:3000/api")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data)
 
-      this.loaded = true
-    } catch (e) {
-      console.error(e)
-    }
+        this.chartData =data;
+
+        this.loaded = true
+      })
+      .catch((err) => {
+        console.log("error occured", err)
+      });
+
+
   }
-
 }
 </script>
