@@ -23,7 +23,7 @@ const persistence = require('aedes-persistence-mongodb')({
 })
 
 async function httpGetAll(req, res) {
-  var dataout = { temp: [], time: [] }
+  var dataout = { datasets: [], labels: [] }
 
   console.log('***********httpGetAll************');
 
@@ -65,8 +65,8 @@ async function httpGetAll(req, res) {
         tm.push(document.temp)
         ti.push(document.time);
       });
-      dataout.temp = tm;
-      dataout.time = ti;
+      dataout.datasets.push(tm);
+      dataout.labels = ti;
 
       // dataout = data;
 
@@ -77,7 +77,7 @@ async function httpGetAll(req, res) {
 
   await run().catch(console.dir);
 
-  // return res.status(200).json(dataout);
+  // return res.send(dataout);
 
   return res.json({
     labels: ["2024-04-21T13:30:25.723Z", "2024-04-21T13:30:27.660Z", "2024-04-21T13:30:29.633Z", "2024-04-21T13:30:31.626Z", "2024-04-21T13:30:33.651Z", "2024-04-21T13:30:35.642Z", "2024-04-21T13:30:37.653Z", "2024-04-21T13:30:39.652Z", "2024-04-21T13:30:41.651Z", "2024-04-21T13:30:43.698Z"],

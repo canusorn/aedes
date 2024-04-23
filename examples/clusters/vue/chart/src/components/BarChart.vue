@@ -40,6 +40,7 @@ export default {
     fetch("http://192.168.0.101:3000/api")
       .then((res) => res.json())
       .then((data) => {
+        console.log(typeof data)
         console.log(data)
 
         this.chartData =data;
