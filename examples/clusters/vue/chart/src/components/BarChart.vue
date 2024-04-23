@@ -41,7 +41,7 @@ export default {
       .then((res) => res.json())
       .then((data) => {
         console.log(typeof data)
-        console.log(data)
+        console.log(data )
 
         this.chartData =data;
 

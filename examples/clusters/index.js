@@ -23,7 +23,7 @@ const persistence = require('aedes-persistence-mongodb')({
 })
 
 async function httpGetAll(req, res) {
-  var dataout = { datasets: [], labels: [] }
+  var dataout = { labels: [], datasets: [] }
 
   console.log('***********httpGetAll************');
 
@@ -61,12 +61,12 @@ async function httpGetAll(req, res) {
       let tm = [];
       let ti = [];
       data.forEach((document) => {
-        console.log(document.temp)
+        // console.log(document.temp)
         tm.push(document.temp)
         ti.push(document.time);
       });
-      dataout.datasets.push(tm);
       dataout.labels = ti;
+      dataout.datasets = [{data:tm}];
 
       // dataout = data;
 
@@ -77,12 +77,20 @@ async function httpGetAll(req, res) {
 
   await run().catch(console.dir);
 
-  // return res.send(dataout);
+  console.log((dataout));
+  console.log(
+    {
+      labels: ["2024-04-21T13:30:25.723Z", "2024-04-21T13:30:27.660Z", "2024-04-21T13:30:29.633Z", "2024-04-21T13:30:31.626Z", "2024-04-21T13:30:33.651Z", "2024-04-21T13:30:35.642Z", "2024-04-21T13:30:37.653Z", "2024-04-21T13:30:39.652Z", "2024-04-21T13:30:41.651Z", "2024-04-21T13:30:43.698Z"],
+      datasets: [{ data: [35, 35, 34, 35, 35, 35, 35, 35, 35, 31] }]
+    }
+  );
 
-  return res.json({
-    labels: ["2024-04-21T13:30:25.723Z", "2024-04-21T13:30:27.660Z", "2024-04-21T13:30:29.633Z", "2024-04-21T13:30:31.626Z", "2024-04-21T13:30:33.651Z", "2024-04-21T13:30:35.642Z", "2024-04-21T13:30:37.653Z", "2024-04-21T13:30:39.652Z", "2024-04-21T13:30:41.651Z", "2024-04-21T13:30:43.698Z"],
-    datasets: [{ data: [35, 35, 34, 35, 35, 35, 35, 35, 35, 31] }]
-  });
+  return res.json(dataout);
+
+  // return res.json({
+  //   labels: ["2024-04-21T13:30:25.723Z", "2024-04-21T13:30:27.660Z", "2024-04-21T13:30:29.633Z", "2024-04-21T13:30:31.626Z", "2024-04-21T13:30:33.651Z", "2024-04-21T13:30:35.642Z", "2024-04-21T13:30:37.653Z", "2024-04-21T13:30:39.652Z", "2024-04-21T13:30:41.651Z", "2024-04-21T13:30:43.698Z"],
+  //   datasets: [{ data: [35, 35, 34, 35, 35, 35, 35, 35, 35, 31] }]
+  // });
 
 }
 
