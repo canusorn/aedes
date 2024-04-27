@@ -41,9 +41,25 @@ export default {
       .then((res) => res.json())
       .then((data) => {
         console.log(typeof data)
-        console.log(data )
+        console.log(data)
 
-        this.chartData =data;
+
+      // console.dir(dataout);
+      let tm = [];
+      let ti = [];
+      data.forEach((document) => {
+        // console.log(document.temp)
+        tm.push(document.temp)
+        ti.push(document.time);
+      });
+
+      var dataout = { labels: [], datasets: [] }
+      
+      dataout.labels = ti;
+      dataout.datasets = [{data:tm}];
+
+
+        this.chartData =dataout;
 
         this.loaded = true
       })
