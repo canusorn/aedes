@@ -43,23 +43,32 @@ export default {
         console.log(typeof data)
         console.log(data)
 
+        let size = Object.keys(data[0]).length;
+        // console.log("object size : " + size);
 
-      // console.dir(dataout);
-      let tm = [];
-      let ti = [];
-      data.forEach((document) => {
-        // console.log(document.temp)
-        tm.push(document.temp)
-        ti.push(document.time);
-      });
-
-      var dataout = { labels: [], datasets: [] }
-      
-      dataout.labels = ti;
-      dataout.datasets = [{data:tm}];
+        var dataout = { labels: [], datasets: [] }
 
 
-        this.chartData =dataout;
+        let labels = [], datasets = [];
+
+        data.forEach((document) => {
+
+          for (let i = 1; i <= size - 2; i++) {
+            if (!datasets[i - 1]) {
+              datasets.push({ label: Object.keys(data[0])[i], data: [] })
+            }
+            datasets[i - 1].data.push(Object.values(document)[i])
+          }
+            labels.push(Object.values(document)[size - 1])
+
+        });
+
+
+        dataout.labels = labels;
+        dataout.datasets = datasets;
+
+
+        this.chartData = dataout;
 
         this.loaded = true
       })

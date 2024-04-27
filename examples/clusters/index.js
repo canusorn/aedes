@@ -39,10 +39,10 @@ async function httpGetAll(req, res) {
       // Query for movies that have a runtime less than 15 minutes
       const query = {};
       const options = {
-        limit: 100,
+        limit: 10,
         // Sort returned documents in ascending order by title (A->Z)
         sort: { time: -1 },
-        projection: { _id: 0, temp: 1, time: 1 },
+        // projection: { _id: 0, temp: 1, time: 1 },
       };
       // Execute query 
       const cursor = movies.find(query, options);
@@ -56,7 +56,7 @@ async function httpGetAll(req, res) {
       // }
 
       const data = await cursor.toArray();
-dataout = data;
+      dataout = data;
 
 
       // dataout = data;
