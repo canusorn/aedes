@@ -11,7 +11,7 @@ const app = express()
 const port = 3000
 
 app.use(cors({
-  origin: 'http://192.168.0.101:8080'
+  origin: ['http://192.168.0.101:8080','http://localhost:5173']
 }));
 
 const mq = require('mqemitter-mongodb')({
@@ -23,6 +23,7 @@ const persistence = require('aedes-persistence-mongodb')({
 })
 
 async function httpGetAll(req, res) {
+  const espid = req.params.espid;
   var dataout = { labels: [], datasets: [] }
 
   console.log('***********httpGetAll************');
@@ -33,13 +34,13 @@ async function httpGetAll(req, res) {
     try {
       // Get the database and collection on which to run the operation
       const database = client.db("insertDB");
-      const movies = database.collection("7884150");
+      const movies = database.collection(espid);
 
 
       // Query for movies that have a runtime less than 15 minutes
       const query = {};
       const options = {
-        limit: 10,
+        limit: 100,
         // Sort returned documents in ascending order by title (A->Z)
         sort: { time: -1 },
         // projection: { _id: 0, temp: 1, time: 1 },
@@ -68,20 +69,8 @@ async function httpGetAll(req, res) {
 
   await run().catch(console.dir);
 
-  // console.log((dataout));
-  // console.log(
-  //   {
-  //     labels: ["2024-04-21T13:30:25.723Z", "2024-04-21T13:30:27.660Z", "2024-04-21T13:30:29.633Z", "2024-04-21T13:30:31.626Z", "2024-04-21T13:30:33.651Z", "2024-04-21T13:30:35.642Z", "2024-04-21T13:30:37.653Z", "2024-04-21T13:30:39.652Z", "2024-04-21T13:30:41.651Z", "2024-04-21T13:30:43.698Z"],
-  //     datasets: [{ data: [35, 35, 34, 35, 35, 35, 35, 35, 35, 31] }]
-  //   }
-  // );
 
   return res.json(dataout);
-
-  // return res.json({
-  //   labels: ["2024-04-21T13:30:25.723Z", "2024-04-21T13:30:27.660Z", "2024-04-21T13:30:29.633Z", "2024-04-21T13:30:31.626Z", "2024-04-21T13:30:33.651Z", "2024-04-21T13:30:35.642Z", "2024-04-21T13:30:37.653Z", "2024-04-21T13:30:39.652Z", "2024-04-21T13:30:41.651Z", "2024-04-21T13:30:43.698Z"],
-  //   datasets: [{ data: [35, 35, 34, 35, 35, 35, 35, 35, 35, 31] }]
-  // });
 
 }
 
@@ -173,7 +162,7 @@ if (cluster.isMaster) {
   app.get('/', (req, res) => {
     res.send('Hello World!')
   })
-  app.get('/api', httpGetAll);
+  app.get('/api/v1/:espid', httpGetAll);
 
   app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
