@@ -23,7 +23,8 @@ const persistence = require('aedes-persistence-mongodb')({
 })
 
 async function httpGetAll(req, res) {
-  const espid = req.params.espid;
+  const espid = Number(req.params.espid);
+  console.log(espid);
   var dataout = { labels: [], datasets: [] }
 
   console.log('***********httpGetAll************');
@@ -34,7 +35,7 @@ async function httpGetAll(req, res) {
     try {
       // Get the database and collection on which to run the operation
       const database = client.db("insertDB");
-      const movies = database.collection(espid);
+      const movies = database.collection(String(espid));
 
 
       // Query for movies that have a runtime less than 15 minutes
