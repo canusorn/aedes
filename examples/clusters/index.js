@@ -5,13 +5,20 @@ const { cpus } = require('os')
 const MONGO_URL = 'mongodb://127.0.0.1/aedes-clusters'
 const { MongoClient } = require("mongodb");
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+
+require('dotenv').config();
+
+const config = {
+  JWT_PRIVATEKEY: process.env.JWT_PRIVATEKEY
+}
 
 const express = require('express')
 const app = express()
 const port = 3000
 
 app.use(cors({
-  origin: ['http://192.168.0.101:8080','http://localhost:5173']
+  origin: ['http://192.168.0.101:8080', 'http://localhost:5173']
 }));
 
 const mq = require('mqemitter-mongodb')({
@@ -160,10 +167,25 @@ if (cluster.isMaster) {
 
   app.use(express.json());
 
+
   app.get('/', (req, res) => {
     res.send('Hello World!')
   })
   app.get('/api/v1/:espid', httpGetAll);
+
+  app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (password !== 'vo6liIN') {
+      return res.status(403);
+    }
+
+    console.log(email);
+
+    const token = jwt.sign({ email }, config.JWT_PRIVATEKEY);
+    // res.cookie('token', token, { httpOnly: true });
+    res.json({ token: token });
+  })
 
   app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
