@@ -10,7 +10,8 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const config = {
-  JWT_PRIVATEKEY: process.env.JWT_PRIVATEKEY
+  ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
+  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET
 }
 
 const express = require('express')
@@ -147,6 +148,33 @@ function startAedes() {
   })
 }
 
+const jwtGenerate = (email) => {
+  const accessToken = jwt.sign(
+    {
+      sub: email,
+      iat: new Date().getTime(),
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: "1d" }
+  )
+
+  return accessToken
+}
+
+const jwtRefreshTokenGenerate = (email) => {
+  const refreshToken = jwt.sign(
+    {
+      sub: email,
+      iat: new Date().getTime(),
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: "30d" }
+  )
+
+  return refreshToken
+}
+
+
 if (cluster.isMaster) {
   const numWorkers = cpus().length
   for (let i = 0; i < numWorkers; i++) {
@@ -182,9 +210,10 @@ if (cluster.isMaster) {
 
     console.log(email);
 
-    const token = jwt.sign({ email }, config.JWT_PRIVATEKEY);
-    // res.cookie('token', token, { httpOnly: true });
-    res.json({ token: token });
+    const access_token = jwtGenerate(email);
+    const refresh_token = jwtRefreshTokenGenerate(email)
+
+    res.json({ access_token: access_token,refresh_token: refresh_token });
   })
 
   app.listen(port, () => {
