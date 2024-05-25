@@ -13,6 +13,7 @@
     "aedes": "^0.48.1",
     "aedes-persistence-mongodb": "^9.1.0",
     "aedes-persistence-redis": "^9.0.1",
+    "bcrypt": "^5.1.1",
     "chart.js": "^4.4.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

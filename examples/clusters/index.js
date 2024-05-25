@@ -43,7 +43,7 @@ async function httpGetAll(req, res) {
     try {
       // Get the database and collection on which to run the operation
       const database = client.db("insertDB");
-      const movies = database.collection(String(espid));
+      const db = database.collection(String(espid));
 
 
       // Query for movies that have a runtime less than 15 minutes
@@ -55,15 +55,11 @@ async function httpGetAll(req, res) {
         // projection: { _id: 0, temp: 1, time: 1 },
       };
       // Execute query 
-      const cursor = movies.find(query, options);
+      const cursor = db.find(query, options);
       // Print a message if no documents were found
-      if ((await movies.countDocuments(query)) === 0) {
+      if ((await db.countDocuments(query)) === 0) {
         console.log("No documents found!");
       }
-      // Print returned documents
-      // for await (const doc of cursor) {
-      //   console.dir(doc);
-      // }
 
       const data = await cursor.toArray();
       dataout = data;
@@ -195,11 +191,32 @@ if (cluster.isMaster) {
 
   app.use(express.json());
 
+  function tokenValidate(req, res, next) {
+    // Extract the token from the Authorization header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    // Verify and decode the token
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(403).json({ message: 'Invalid token' });
+      }
+
+      // Add the decoded user information to the request object
+      req.user = decoded.sub;
+      // console.log(decoded.sub);
+      next();
+    });
+  }
 
   app.get('/', (req, res) => {
     res.send('Hello World!')
   })
-  app.get('/api/v1/:espid', httpGetAll);
+  app.get('/api/v1/:espid', tokenValidate, httpGetAll);
 
   app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
@@ -213,7 +230,65 @@ if (cluster.isMaster) {
     const access_token = jwtGenerate(email);
     const refresh_token = jwtRefreshTokenGenerate(email)
 
-    res.json({ access_token: access_token,refresh_token: refresh_token });
+    res.json({ access_token: access_token, refresh_token: refresh_token });
+  })
+
+  app.post('/api/signup', async (req, res) => {
+    const { email, password } = req.body;
+
+    // console.log(email);
+
+    const bcrypt = require("bcrypt")
+    const saltRounds = 10
+
+    const hash = await bcrypt.hash(password, saltRounds);
+
+    // console.log(hash);
+
+    const uri = "mongodb://localhost:27017";
+    const client = new MongoClient(uri);
+
+    let error = "";
+
+    async function run() {
+      try {
+        // Get the database and collection on which to run the operation
+        const database = client.db("database");
+        const db = database.collection("user");
+
+
+        // Create a document to insert
+        const doc = {
+          email: email,
+          password: hash,
+        }
+
+        // Insert the defined document into the "haiku" collection
+        const result = await db.insertOne(doc);
+
+        // Print the ID of the inserted document
+        console.log(`A document was inserted with the _id: ${result.insertedId}`)
+
+      } catch (e) {
+        await client.close();
+        console.error(e.code);
+        error = e.message;
+      } finally {
+        await client.close();
+      }
+    }
+
+    await run();
+
+    if (error) {
+      res.json({ error: error,email:email });
+    } else {
+
+    const access_token = jwtGenerate(email);
+    const refresh_token = jwtRefreshTokenGenerate(email)
+
+      res.json({ access_token: access_token, refresh_token: refresh_token });
+    }
   })
 
   app.listen(port, () => {
