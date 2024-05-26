@@ -1,4 +1,5 @@
 const { MongoClient } = require("mongodb");
+const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -33,8 +34,28 @@ const jwtRefreshTokenGenerate = (email) => {
     return refreshToken
 }
 
+async function getUser(email) {
+    const uri = "mongodb://localhost:27017";
+    const client = new MongoClient(uri);
 
-function tokenValidate(req, res, next) {
+    const database = client.db("database");
+    const db = database.collection("user");
+
+
+    // Query for movies that have a runtime less than 15 minutes
+    const query = { email: email };
+
+    // Execute query 
+    const userDB = await db.findOne(query);
+
+    // console.log(userDB);
+    // Print a message if no documents were found
+    client.close();
+    return userDB;
+
+}
+
+async function tokenValidate(req, res, next) {
     // Extract the token from the Authorization header
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -43,31 +64,59 @@ function tokenValidate(req, res, next) {
         return res.status(401).json({ message: 'No token provided' });
     }
 
+    let decoded, userDB
     // Verify and decode the token
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ message: 'Invalid token' });
-        }
+    try {
+        decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        userDB = await getUser(decoded.sub);
+    } catch (err) {
+        // err
+        return res.status(403).json({ message: 'error token' });
+    }
 
-        // Add the decoded user information to the request object
-        req.user = decoded.sub;
-        // console.log(decoded.sub);
-        next();
-    });
+    if (!userDB.email) {
+        return res.status(403).json({ message: 'Invalid token' });
+    }
+
+    // Add the decoded user information to the request object
+    req.user = decoded.sub;
+    // console.log(decoded.sub);
+    next();
+
 }
 
 async function login(req, res) {
     const { email, password } = req.body;
 
     if (!email) {
-        return res.status(400);
+        res.status(400).send({ error: "no data" });
     }
 
-    if (password !== 'vo6liIN') {
-        return res.status(403);
-    }
+    // if (password !== 'vo6liIN') {
+    //     return res.status(403);
+    // }
 
-    console.log(email);
+
+    try {
+        const userDB = await getUser(email);
+        console.log(userDB.password);
+
+        if (!userDB) {
+            console.log("No documents found!");
+            res.status(403).send({ error: "No user found!" });
+        }
+
+        const match = await bcrypt.compare(password, userDB.password);
+
+        if (!match) {
+            console.log("unmatched password");
+            await client.close();
+            res.status(403).send({ error: "unmatched password" });
+        }
+    } catch (e) {
+        console.error(e);
+        res.status(403).send({ error: "error get from database" });
+    }
 
     const access_token = jwtGenerate(email);
     const refresh_token = jwtRefreshTokenGenerate(email)
@@ -80,7 +129,7 @@ async function signup(req, res) {
 
     // console.log(email);
 
-    const bcrypt = require("bcrypt")
+
     const saltRounds = 10
 
     const hash = await bcrypt.hash(password, saltRounds);
