@@ -5,6 +5,10 @@ const { cpus } = require('os')
 const { MongoClient } = require("mongodb");
 const cors = require('cors');
 
+
+const httpServer = require('http').createServer()
+const ws = require('websocket-stream')
+
 const api = require('./routes/api');
 
 const MONGO_URL = 'mongodb://127.0.0.1/aedes-clusters'
@@ -28,18 +32,22 @@ const persistence = require('aedes-persistence-mongodb')({
 
 function startAedes() {
 
-  const port = 1883
-
+  // const port = 1883
   const aedes = Aedes({
     id: 'BROKER_' + cluster.worker.id,
     mq,
     persistence
   })
 
-  const server = createServer(aedes.handle)
+  // const port = 8888
+  ws.createServer({ server: httpServer }, aedes.handle)
+  httpServer.listen(8888, function () {
+    console.log('websocket server listening on port ', 8888)
+  })
 
-  server.listen(port, '0.0.0.0', function () {
-    console.log('Aedes listening on port:', port)
+  const server = createServer(aedes.handle)
+  server.listen(1883, '0.0.0.0', function () {
+    console.log('Aedes listening on port:', 1883)
     aedes.publish({ topic: 'aedes/hello', payload: "I'm broker " + aedes.id })
   })
 
@@ -47,6 +55,57 @@ function startAedes() {
     console.log('Server error', err)
     process.exit(1)
   })
+
+  aedes.preConnect = function (client, packet, callback) {
+    callback(null, true)
+    console.log('preConnect'); console.log(client.conn.remoteAddress);
+  }
+
+  // aedes.authenticate = (client, username, password, callback) => {
+  //   // Replace this with your actual authentication mechanism
+  //   // password = Buffer.from(password, 'base64').toString();
+  //   console.log("authenticate id:", client.id, "user:", username);
+  //   // console.log("authenticate password:", password); // spacing level = 2
+  //   if (username === 'anusorn1998@gmail.com') {
+  //     callback(null, true); // Successful authentication
+  //   } else {
+  //     callback(new Error('Authentication failed'), false);
+  //   }
+  // };
+
+  // Define your subscription authorization logic
+  // Attach the authorization handler to the Aedes instance
+  // aedes.authorizeSubscribe = (client, sub, callback) => {
+  // Replace this with your actual authorization mechanism
+  // console.log("authorizeSubscribe" + client.username + sub.topic);
+  // if (client.username === 'anusorn1998@gmail.com' && sub.topic.startsWith('1733696')) {
+  // callback(null, true); // Allow subscription
+  // } else {
+  //   callback(new Error('Unauthorized subscription'), false);
+  // }
+  // };
+  // aedes.authorizeSubscribe = function (client, sub, callback) {
+  //   if (sub.topic === 'aaaa') {
+  //     return callback(new Error('wrong topic'))
+  //   }
+  //   if (sub.topic === 'bbb') {
+  //     // overwrites subscription
+  //     sub.topic = 'foo'
+  //     sub.qos = 1
+  //   }
+  //   console.log("authorizeSubscribe" + client.username + sub.topic);
+  //   callback(null, sub)
+  // }
+
+  // aedes.authorizePublish = function (client, packet, callback) {
+  //   if (packet.topic === 'aaaa') {
+  //     return callback(new Error('wrong topic'))
+  //   }
+  //   if (packet.topic === 'bbb') {
+  //     packet.payload = Buffer.from('overwrite packet payload')
+  //   }
+  //   callback(null)
+  // }
 
   aedes.on('subscribe', function (subscriptions, client) {
     console.log('MQTT client \x1b[32m' + (client ? client.id : client) +
@@ -91,7 +150,7 @@ function startAedes() {
   })
 }
 
-function startHttp(){
+function startHttp() {
   app.use(express.json());
 
   app.get('/', (req, res) => {
