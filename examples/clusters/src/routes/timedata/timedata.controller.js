@@ -12,7 +12,7 @@ async function getLastData(req, res) {
 
     try {
         // Get the database and collection on which to run the operation
-        const database = client.db("insertDB");
+        const database = client.db("timedata");
         const db = database.collection(String(espid));
 
 

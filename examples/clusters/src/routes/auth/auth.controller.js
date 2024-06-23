@@ -92,10 +92,6 @@ async function login(req, res) {
         res.status(400).send({ error: "no data" });
     }
 
-    // if (password !== 'vo6liIN') {
-    //     return res.status(403);
-    // }
-
 
     try {
         const userDB = await getUser(email);

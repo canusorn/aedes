@@ -40,7 +40,7 @@ void connect() {
   char  CharArray[ArrayLength];
   S.toCharArray(CharArray, ArrayLength);
 
-  while (!client.connect(CharArray, "anusorn1998@gmail.com")) {
+  while (!client.connect(CharArray, "anusorn1998@gmail.com","iotbundle")) {
     Serial.print(".");
     delay(1000);
   }

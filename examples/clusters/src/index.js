@@ -2,7 +2,6 @@ const cluster = require('cluster')
 const Aedes = require('aedes')
 const { createServer } = require('net')
 const { cpus } = require('os')
-const { MongoClient } = require("mongodb");
 const cors = require('cors');
 
 
@@ -10,6 +9,7 @@ const httpServer = require('http').createServer()
 const ws = require('websocket-stream')
 
 const api = require('./routes/api');
+const { publish, authenticate } = require('./controllers/mqttdevice.controller.js');
 
 const MONGO_URL = 'mongodb://127.0.0.1/aedes-clusters'
 
@@ -19,7 +19,7 @@ const app = express()
 const port = 3000
 
 app.use(cors({
-  origin: ['http://192.168.0.101:8080', 'http://localhost:5173']
+  origin: ['http://192.168.0.101:8080', 'http://localhost:5173', 'http://localhost:4173']
 }));
 
 const mq = require('mqemitter-mongodb')({
@@ -58,20 +58,16 @@ function startAedes() {
 
   aedes.preConnect = function (client, packet, callback) {
     callback(null, true)
-    console.log('preConnect'); console.log(client.conn.remoteAddress);
+    // console.log('preConnect'); console.log(client.conn.remoteAddress);
   }
 
-  // aedes.authenticate = (client, username, password, callback) => {
-  //   // Replace this with your actual authentication mechanism
-  //   // password = Buffer.from(password, 'base64').toString();
-  //   console.log("authenticate id:", client.id, "user:", username);
-  //   // console.log("authenticate password:", password); // spacing level = 2
-  //   if (username === 'anusorn1998@gmail.com') {
-  //     callback(null, true); // Successful authentication
-  //   } else {
-  //     callback(new Error('Authentication failed'), false);
-  //   }
-  // };
+  aedes.authenticate = (client, username, password, callback) => {
+    // Replace this with your actual authentication mechanism
+    password = Buffer.from(password, 'base64').toString();
+    console.log("authenticate id:", client.id, "user:", username);
+    // console.log("authenticate password:", password); // spacing level = 2
+    authenticate(client, username, password, callback);
+  };
 
   // Define your subscription authorization logic
   // Attach the authorization handler to the Aedes instance
@@ -131,21 +127,7 @@ function startAedes() {
   aedes.on('publish', async function (packet, client) {
     console.log('Client \x1b[31m' + (client ? client.id : 'BROKER_' + aedes.id) + '\x1b[0m has published', packet.payload.toString(), 'on', packet.topic, 'to broker', aedes.id)
 
-    if (packet.topic.includes('data/update')) {
-      // console.table(Buffer.from(packet.payload, 'base64').toString());
-      const datapayload = JSON.parse(Buffer.from(packet.payload, 'base64').toString());
-      datapayload.time = new Date();
-
-      const uri = "mongodb://localhost:27017";
-      const clientmongo = new MongoClient(uri);
-      const database = clientmongo.db("insertDB");
-      const db = database.collection(client.id);
-
-      const result = await db.insertOne(datapayload);
-      clientmongo.close();
-
-      console.log(`A document was inserted with the _id: ${result.insertedId}`);
-    }
+    publish(packet, client);
 
   })
 }
@@ -160,7 +142,7 @@ function startHttp() {
   app.use('/api', api);
 
   app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
+    console.log(`Http app listening on port ${port}`)
   })
 }
 
