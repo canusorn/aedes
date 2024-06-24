@@ -34,7 +34,7 @@ function authenticate(client, username, password, callback) {
         if (password === config.DEVICE_PASS && Number(client.id)) {
             addEspid(client.id, username);
             callback(null, true); // Successful authentication
-        } else if (password === config.DEVICE_PASS) {
+        } else if (password === config.CLIENT_PASS) {
             callback(null, true); // Successful authentication
         } else{
             callback(new Error('Authentication failed'), false);
