@@ -1,7 +1,10 @@
+const jwt = require('jsonwebtoken');
 const { MongoClient } = require("mongodb");
+const { getUser } = require("../routes/auth/auth.controller")
 require('dotenv').config();
 
 const config = {
+    ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
     DEVICE_PASS: process.env.DEVICE_PASS,
     CLIENT_PASS: process.env.CLIENT_PASS,
 }
@@ -27,22 +30,45 @@ async function publish(packet, client) {
 
 }
 
-function authenticate(client, username, password, callback) {
+function clientValidate(token) {
 
-    if (username === 'anusorn1998@gmail.com') {
+    if (!token) {
+        return false;
+    }
 
-        if (password === config.DEVICE_PASS && Number(client.id)) {
+    try {
+        let decoded = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
+        return decoded.sub;
+    } catch (err) {
+        // err
+        console.error("invalid token ", err);
+        return false;
+    }
+}
+
+async function authenticate(client, username, password, callback) {
+
+    const userDB = await getUser(username);
+    // console.log(userDB);
+
+    if (userDB == null) {
+        callback(new Error('Authentication failed'), false);
+        console.log(`Authentication failed, no email`);
+    }
+    else //if (username === userDB.email) 
+    {
+        if (password === config.DEVICE_PASS && Number(client.id)) {  // esp authen
             addEspid(client.id, username);
             callback(null, true); // Successful authentication
-        } else if (password === config.CLIENT_PASS) {
+        } else if (clientValidate(password) === userDB.email) {  // web mqtt authen
             callback(null, true); // Successful authentication
-        } else{
+        } else {
             callback(new Error('Authentication failed'), false);
         }
     }
-    else {
-        callback(new Error('Authentication failed'), false);
-    }
+    // else {
+    //     callback(new Error('Authentication failed'), false);
+    // }
 }
 
 async function addEspid(espid, email) {

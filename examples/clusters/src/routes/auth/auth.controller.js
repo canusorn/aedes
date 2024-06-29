@@ -14,7 +14,7 @@ const jwtGenerate = (email) => {
             sub: email,
             iat: new Date().getTime(),
         },
-        process.env.ACCESS_TOKEN_SECRET,
+        config.ACCESS_TOKEN_SECRET,
         { expiresIn: "1d" }
     )
 
@@ -41,18 +41,25 @@ async function getUser(email) {
     const database = client.db("database");
     const db = database.collection("user");
 
-
     // Query for movies that have a runtime less than 15 minutes
     const query = { email: email };
+    let userDB = {};
+    try {
+        // Execute query 
+        userDB = await db.findOne(query);
 
-    // Execute query 
-    const userDB = await db.findOne(query);
+        // console.log(userDB);
+        // Print a message if no documents were found
 
-    // console.log(userDB);
-    // Print a message if no documents were found
-    client.close();
+    }
+    catch (e) {
+        console.error(e);
+    }
+    finally {
+        await client.close();
+    }
+
     return userDB;
-
 }
 
 async function tokenValidate(req, res, next) {
@@ -95,7 +102,7 @@ async function login(req, res) {
 
     try {
         const userDB = await getUser(email);
-        console.log(userDB.password);
+        // console.log(userDB.password);
 
         if (!userDB) {
             console.log("No documents found!");
@@ -177,4 +184,4 @@ async function signup(req, res) {
 }
 
 
-module.exports = { jwtGenerate, jwtRefreshTokenGenerate, tokenValidate, login, signup };
+module.exports = { jwtGenerate, jwtRefreshTokenGenerate, tokenValidate, login, signup, getUser };

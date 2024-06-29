@@ -64,7 +64,7 @@ function startAedes() {
   aedes.authenticate = (client, username, password, callback) => {
     // Replace this with your actual authentication mechanism
     password = Buffer.from(password, 'base64').toString();
-    console.log("authenticate id:", client.id, "user:", username);
+    console.log("MQTT Authenticate id:", client.id, "User:", username);
     // console.log("authenticate password:", password); // spacing level = 2
     authenticate(client, username, password, callback);
   };
