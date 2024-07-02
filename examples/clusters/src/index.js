@@ -9,7 +9,7 @@ const httpServer = require('http').createServer()
 const ws = require('websocket-stream')
 
 const api = require('./routes/api');
-const { publish, authenticate } = require('./controllers/mqttdevice.controller.js');
+const { publish, authenticate, authorizeSub } = require('./controllers/mqttdevice.controller.js');
 
 const MONGO_URL = 'mongodb://127.0.0.1/aedes-clusters'
 
@@ -72,7 +72,7 @@ function startAedes() {
   // Define your subscription authorization logic
   // Attach the authorization handler to the Aedes instance
   // aedes.authorizeSubscribe = (client, sub, callback) => {
-  // Replace this with your actual authorization mechanism
+  // // Replace this with your actual authorization mechanism
   // console.log("authorizeSubscribe" + client.username + sub.topic);
   // if (client.username === 'anusorn1998@gmail.com' && sub.topic.startsWith('1733696')) {
   // callback(null, true); // Allow subscription
@@ -80,18 +80,33 @@ function startAedes() {
   //   callback(new Error('Unauthorized subscription'), false);
   // }
   // };
-  // aedes.authorizeSubscribe = function (client, sub, callback) {
-  //   if (sub.topic === 'aaaa') {
-  //     return callback(new Error('wrong topic'))
-  //   }
-  //   if (sub.topic === 'bbb') {
-  //     // overwrites subscription
-  //     sub.topic = 'foo'
-  //     sub.qos = 1
-  //   }
-  //   console.log("authorizeSubscribe" + client.username + sub.topic);
-  //   callback(null, sub)
-  // }
+  aedes.authorizeSubscribe = async function (client, sub, callback) {
+
+    // console.dir(client.id);
+    const espid = client.id.split("-")[1];
+
+    // if (ic === 'esp8266' || ic === 'esp32') {
+    const thisDevice = { email: client._parser.settings.username, espid: Number(espid) };
+    const allDevice = await authorizeSub(thisDevice.email);
+    // console.dir(thisDevice)
+    const matchid = allDevice.find(e => e.espid === thisDevice.espid);
+    // console.log(matchid);
+    // const matchemail = matchid.email === thisDevice.email;
+    // console.log(matchemail);
+
+    if (!matchid) {
+      console.error("Subscribe Unauthorize from " + client.id + ', Wrong user' + "at " + sub.topic)
+      return callback(new Error('Subscribe Unauthorize, Wrong user'))
+    }
+
+    // console.log(sub.topic);
+    if (!sub.topic.startsWith("/" + espid + "/")) {
+      console.error("Subscribe Unauthorize from " + client.id + ', Wrong Topic' + "at " + sub.topic)
+      return callback(new Error('Subscribe Unauthorize, Wrong Topic'))
+    }
+    console.log("Subscribe Authorize from \x1b[32m" + client.id + "\x1b[0m at " + sub.topic);
+    callback(null, sub)
+  }
 
   // aedes.authorizePublish = function (client, packet, callback) {
   //   if (packet.topic === 'aaaa') {
@@ -115,7 +130,7 @@ function startAedes() {
 
   // fired when a client connects
   aedes.on('client', function (client) {
-    console.log('Client Connected: \x1b[33m' + (client ? client.id : client) + '\x1b[0m', 'to broker', aedes.id)
+    console.log('Client Connected: \x1b[32m' + (client ? client.id : client) + '\x1b[0m', 'to broker', aedes.id)
   })
 
   // fired when a client disconnects
@@ -125,7 +140,7 @@ function startAedes() {
 
   // fired when a message is published
   aedes.on('publish', async function (packet, client) {
-    console.log('Client \x1b[31m' + (client ? client.id : 'BROKER_' + aedes.id) + '\x1b[0m has published', packet.payload.toString(), 'on', packet.topic, 'to broker', aedes.id)
+    console.log('Client \x1b[33m' + (client ? client.id : 'BROKER_' + aedes.id) + '\x1b[0m has published\x1b[33m', packet.payload.toString(), '\x1b[0mon', packet.topic, 'to broker', aedes.id)
 
     publish(packet, client);
 

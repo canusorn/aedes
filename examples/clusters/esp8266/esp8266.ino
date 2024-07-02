@@ -19,7 +19,7 @@ MQTTClient client;
 
 #define DHTPIN D7
 // Uncomment whatever type you're using!
- #define DHTTYPE DHT11   // DHT 11
+#define DHTTYPE DHT11   // DHT 11
 //#define DHTTYPE DHT22 // DHT 22  (AM2302), AM2321
 // #define DHTTYPE DHT21   // DHT 21 (AM2301)
 DHT dht(DHTPIN, DHTTYPE);
@@ -35,19 +35,24 @@ void connect() {
 
   Serial.print("\nconnecting...");
 
-  String S = String(ESP.getChipId());
+  String S = "esp8266-" + String(ESP.getChipId());
   int   ArrayLength  = S.length() + 1; //The +1 is for the 0x00h Terminator
   char  CharArray[ArrayLength];
   S.toCharArray(CharArray, ArrayLength);
 
-  while (!client.connect(CharArray, "anusorn1998@gmail.com","iotbundle")) {
+  while (!client.connect(CharArray, "anusorn1998@gmail.com", "iotbundle")) {
     Serial.print(".");
     delay(1000);
   }
 
   Serial.println("\nconnected!");
 
-  client.subscribe("/" + S +"/#");
+  S = String(ESP.getChipId());
+  ArrayLength  = S.length() + 1; //The +1 is for the 0x00h Terminator
+  CharArray[ArrayLength];
+  S.toCharArray(CharArray, ArrayLength);
+
+  client.subscribe("/" + S + "/#");
   // client.unsubscribe("/hello");
 }
 
@@ -81,7 +86,7 @@ void loop() {
   }
 
   // publish a message roughly every second.
-  if (millis() - lastMillis > 2000) {
+  if (millis() - lastMillis > 5000) {
     lastMillis = millis();
 
     float humid = dht.readHumidity();

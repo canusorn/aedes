@@ -78,7 +78,7 @@ async function tokenValidate(req, res, next) {
         userDB = await getUser(decoded.sub);
     } catch (err) {
         // err
-        return res.status(403).json({ message: 'error token' });
+        return res.status(403).json({ message: 'error token ' + err.message });
     }
 
     if (!userDB.email) {
