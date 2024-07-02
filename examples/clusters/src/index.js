@@ -124,7 +124,7 @@ function startAedes() {
   })
 
   aedes.on('unsubscribe', function (subscriptions, client) {
-    console.log('MQTT client \x1b[32m' + (client ? client.id : client) +
+    console.log('MQTT client \x1b[31m' + (client ? client.id : client) +
       '\x1b[0m unsubscribed to topics: ' + subscriptions.join('\n'), 'from broker', aedes.id)
   })
 
