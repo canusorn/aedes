@@ -19,7 +19,7 @@ async function getLastData(req, res) {
         // Query for movies that have a runtime less than 15 minutes
         const query = {};
         const options = {
-            limit: 100,
+            limit: 1000,
             // Sort returned documents in ascending order by title (A->Z)
             sort: { time: -1 },
             // projection: { _id: 0, temp: 1, time: 1 },

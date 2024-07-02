@@ -12,7 +12,7 @@ const config = {
 async function publish(packet, client) {
 
 
-    if (packet.topic.includes('data/update')) {
+    if (packet.topic.endsWith('data/update')) {
         // console.table(Buffer.from(packet.payload, 'base64').toString());
         const datapayload = JSON.parse(Buffer.from(packet.payload, 'base64').toString());
         datapayload.time = new Date();
@@ -35,7 +35,6 @@ function clientValidate(token) {
     if (!token) {
         return false;
     }
-
     try {
         let decoded = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
         return decoded.sub;
@@ -78,10 +77,18 @@ async function addEspid(espid, email) {
     const database = clientmongo.db("database");
     const db = database.collection("espid");
     try {
-        const result = await db.insertOne({ espid: Number(espid), email: email, name: 'device-' + espid, time: new Date() });
-        console.log(`A document was inserted with the _id: ${result.insertedId}`);
+        const thisesp = await db.findOne({ espid: Number(espid) });
+        // console.log("get device: " + thisesp.email);
+        if (thisesp && thisesp.email != email) {
+            const result = await db.updateOne({ espid: Number(espid) }, { $set: { email: email } });
+            console.log(`${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,);
+        } else if(!thisesp) {
+            const result = await db.insertOne({ espid: Number(espid), email: email, name: 'device-' + espid, time: new Date() });
+            console.log(`A document was inserted with the _id: ${result.insertedId}`);
+        }
+
     } catch (e) {
-        console.error(e);
+        console.error(e.message);
     } finally {
         clientmongo.close();
     }
