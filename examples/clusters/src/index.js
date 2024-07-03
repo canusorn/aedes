@@ -4,10 +4,6 @@ const { createServer } = require('net')
 const { cpus } = require('os')
 const cors = require('cors');
 
-
-const httpServer = require('http').createServer()
-const ws = require('websocket-stream')
-
 const api = require('./routes/api');
 const { publish, authenticate, authorizeSub } = require('./controllers/mqttdevice.controller.js');
 
@@ -39,8 +35,9 @@ function startAedes() {
     persistence
   })
 
-  // const port = 8888
-  ws.createServer({ server: httpServer }, aedes.handle)
+  const ws = require('websocket-stream');
+  const httpServer = require('http').createServer();
+  ws.createServer({ server: httpServer }, aedes.handle);
   httpServer.listen(8888, function () {
     console.log('websocket server listening on port ', 8888)
   })
@@ -108,15 +105,14 @@ function startAedes() {
     callback(null, sub)
   }
 
-  // aedes.authorizePublish = function (client, packet, callback) {
-  //   if (packet.topic === 'aaaa') {
-  //     return callback(new Error('wrong topic'))
-  //   }
-  //   if (packet.topic === 'bbb') {
-  //     packet.payload = Buffer.from('overwrite packet payload')
-  //   }
-  //   callback(null)
-  // }
+  aedes.authorizePublish = function (client, packet, callback) {
+    const espid = client.id.split("-")[1];
+    if (!packet.topic.startsWith("/" + espid + "/")) {
+      console.error("Publish Unauthorize from " + client.id + ', Wrong Topic' + "at " + packet.topic)
+      return callback(new Error('wrong topic'))
+    }
+    callback(null)
+  }
 
   aedes.on('subscribe', function (subscriptions, client) {
     console.log('MQTT client \x1b[32m' + (client ? client.id : client) +
