@@ -81,7 +81,7 @@ function startAedes() {
     // console.log(matchemail);
 
     if (!matchid) {
-      console.error("Subscribe Unauthorize from " + client.id + ', Wrong user' + " at " + sub.topic)
+      console.error("\x1B[31mSubscribe Unauthorize from " + client.id + ', Wrong user' + " at " + sub.topic)
       return callback(new Error('Subscribe Unauthorize, Wrong user'))
     }
 
@@ -92,7 +92,7 @@ function startAedes() {
     // console.log(sub.topic);
     // if (!sub.topic.startsWith("/" + espid + "/")) {
     if(!matchSub) {
-      console.error("Subscribe Unauthorize from " + client.id + ', Wrong Topic' + " at " + sub.topic)
+      console.error("\x1B[31mSubscribe Unauthorize from " + client.id + ', Wrong Topic' + " at " + sub.topic)
       return callback(new Error('Subscribe Unauthorize, Wrong Topic'))
     }
     console.log("Subscribe Authorize from \x1b[32m" + client.id + "\x1b[0m at " + sub.topic);
@@ -102,8 +102,8 @@ function startAedes() {
   aedes.authorizePublish = function (client, packet, callback) {
     const espid = client.id;
     if (!packet.topic.startsWith("/" + espid + "/")) {
-      console.error("Publish Unauthorize from " + client.id + ', Wrong Topic' + "at " + packet.topic)
-      return callback(new Error('wrong topic'))
+      console.error("\x1B[31mPublish Unauthorize from " + client.id + ', Wrong Topic' + "at " + packet.topic)
+      return callback(new Error('wrong topic'));
     }
     callback(null)
   }
