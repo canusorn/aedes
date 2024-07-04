@@ -2,7 +2,7 @@ const { MongoClient } = require("mongodb");
 
 
 async function getLastData(req, res) {
-    const espid = Number(req.params.espid);
+    const espid = req.params.espid;
     var dataout = { labels: [], datasets: [] }
 
     console.log('get data from : ' + espid);
@@ -13,7 +13,7 @@ async function getLastData(req, res) {
     try {
         // Get the database and collection on which to run the operation
         const database = client.db("timedata");
-        const db = database.collection(String(espid));
+        const db = database.collection(espid);
 
 
         // Query for movies that have a runtime less than 15 minutes

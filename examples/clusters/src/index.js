@@ -68,8 +68,12 @@ function startAedes() {
 
   aedes.authorizeSubscribe = async function (client, sub, callback) {
 
-    // console.dir(client.id);
-    const espid = client.id;
+    // 
+    var espid = client.id
+    if (client.id.startsWith("WEB")) {
+      espid = client.id.split('_')[1] + "_" + client.id.split('_')[2];
+    }
+console.dir(espid);
 
     // if (ic === 'esp8266' || ic === 'esp32') {
     const thisDevice = { email: client._parser.settings.username, espid: espid };
@@ -91,7 +95,7 @@ function startAedes() {
 
     // console.log(sub.topic);
     // if (!sub.topic.startsWith("/" + espid + "/")) {
-    if(!matchSub) {
+    if (!matchSub) {
       console.error("\x1B[31mSubscribe Unauthorize from " + client.id + ', Wrong Topic' + " at " + sub.topic)
       return callback(new Error('Subscribe Unauthorize, Wrong Topic'))
     }
