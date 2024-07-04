@@ -13,7 +13,7 @@
 
 const char ssid[] = "G6PD";
 const char pass[] = "570610193";
-
+String clientID;
 WiFiClient net;
 MQTTClient client;
 
@@ -35,7 +35,25 @@ void connect() {
 
   Serial.print("\nconnecting...");
 
-  String S = "esp8266-" + String(ESP.getChipId());
+#ifdef ESP8266
+  String macAdd = WiFi.macAddress();
+  String macAddressWithoutColon = macAdd.substring(0, 2) + macAdd.substring(3, 5) + macAdd.substring(6, 8) + macAdd.substring(9, 11) + macAdd.substring(12, 14) + macAdd.substring(15, 17) ;
+  String S = "ESP8266-" + String(ESP.getChipId()) + "_" + macAddressWithoutColon;
+
+#elif ESP32
+  for (int i = 0; i < 41; i = i + 8) {
+    chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+  }
+  Serial.printf("ESP32 Chip model = %s Rev %d\n", ESP.getChipModel(), ESP.getChipRevision());
+  Serial.printf("This chip has %d cores\n", ESP.getChipCores());
+  Serial.print("Chip ID: "); Serial.println(chipId, HEX);
+  String S = String(ESP.getChipModel()) + '-' + String(ESP.getChipRevision()) + "_" + String(chipId, HEX);
+
+#else
+  String S = "NEW-DEVICE" + String(random(100000, 999999));
+
+#endif
+  clientID = S;
   int   ArrayLength  = S.length() + 1; //The +1 is for the 0x00h Terminator
   char  CharArray[ArrayLength];
   S.toCharArray(CharArray, ArrayLength);
@@ -46,11 +64,6 @@ void connect() {
   }
 
   Serial.println("\nconnected!");
-
-  S = String(ESP.getChipId());
-  ArrayLength  = S.length() + 1; //The +1 is for the 0x00h Terminator
-  CharArray[ArrayLength];
-  S.toCharArray(CharArray, ArrayLength);
 
   client.subscribe("/" + S + "/#");
   // client.unsubscribe("/hello");
@@ -92,7 +105,7 @@ void loop() {
     float humid = dht.readHumidity();
     float temp = dht.readTemperature();
 
-    String S = "/" + String(ESP.getChipId()) + "/data/update";
+    String S = "/" + clientID + "/data/update";
     int   ArrayLength  = S.length() + 1; //The +1 is for the 0x00h Terminator
     char  CharArray[ArrayLength];
     S.toCharArray(CharArray, ArrayLength);
