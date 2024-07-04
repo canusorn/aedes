@@ -66,39 +66,33 @@ function startAedes() {
     authenticate(client, username, password, callback);
   };
 
-  // Define your subscription authorization logic
-  // Attach the authorization handler to the Aedes instance
-  // aedes.authorizeSubscribe = (client, sub, callback) => {
-  // // Replace this with your actual authorization mechanism
-  // console.log("authorizeSubscribe" + client.username + sub.topic);
-  // if (client.username === 'anusorn1998@gmail.com' && sub.topic.startsWith('1733696')) {
-  // callback(null, true); // Allow subscription
-  // } else {
-  //   callback(new Error('Unauthorized subscription'), false);
-  // }
-  // };
   aedes.authorizeSubscribe = async function (client, sub, callback) {
 
     // console.dir(client.id);
-    const espid = client.id.split("-")[1];
+    const espid = client.id;
 
     // if (ic === 'esp8266' || ic === 'esp32') {
-    const thisDevice = { email: client._parser.settings.username, espid: Number(espid) };
+    const thisDevice = { email: client._parser.settings.username, espid: espid };
     const allDevice = await authorizeSub(thisDevice.email);
     // console.dir(thisDevice)
-    const matchid = allDevice.find(e => e.espid === thisDevice.espid);
+    const matchid = allDevice.find(e => e.espid == thisDevice.espid);
     // console.log(matchid);
     // const matchemail = matchid.email === thisDevice.email;
     // console.log(matchemail);
 
     if (!matchid) {
-      console.error("Subscribe Unauthorize from " + client.id + ', Wrong user' + "at " + sub.topic)
+      console.error("Subscribe Unauthorize from " + client.id + ', Wrong user' + " at " + sub.topic)
       return callback(new Error('Subscribe Unauthorize, Wrong user'))
     }
 
+    const subId = sub.topic.split('/')[1];
+    const matchSub = allDevice.find(e => e.espid == subId);
+    // console.log(matchSub);
+
     // console.log(sub.topic);
-    if (!sub.topic.startsWith("/" + espid + "/")) {
-      console.error("Subscribe Unauthorize from " + client.id + ', Wrong Topic' + "at " + sub.topic)
+    // if (!sub.topic.startsWith("/" + espid + "/")) {
+    if(!matchSub) {
+      console.error("Subscribe Unauthorize from " + client.id + ', Wrong Topic' + " at " + sub.topic)
       return callback(new Error('Subscribe Unauthorize, Wrong Topic'))
     }
     console.log("Subscribe Authorize from \x1b[32m" + client.id + "\x1b[0m at " + sub.topic);
@@ -106,7 +100,7 @@ function startAedes() {
   }
 
   aedes.authorizePublish = function (client, packet, callback) {
-    const espid = client.id.split("-")[1];
+    const espid = client.id;
     if (!packet.topic.startsWith("/" + espid + "/")) {
       console.error("Publish Unauthorize from " + client.id + ', Wrong Topic' + "at " + packet.topic)
       return callback(new Error('wrong topic'))

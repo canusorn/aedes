@@ -19,7 +19,7 @@ async function publish(packet, client) {
         const uri = "mongodb://localhost:27017";
         const clientmongo = new MongoClient(uri);
         const database = clientmongo.db("timedata");
-        const db = database.collection(client.id.split("-")[1]);
+        const db = database.collection(client.id);
 
         db.insertOne(datapayload)
             .then(result => {
@@ -39,7 +39,7 @@ function clientValidate(token) {
         return decoded.sub;
     } catch (err) {
         // err
-        console.error("invalid token ", err.message);
+        console.error("\x1B[31minvalid token ", err.message);
         return false;
     }
 }
@@ -47,27 +47,25 @@ function clientValidate(token) {
 async function authenticate(client, username, password, callback) {
 
     const userDB = await getUser(username);
-    const [ic, espid] = client.id.split("-");
+    const deviceID = client.id;
     // console.log(userDB);
 
     if (userDB == null) {
         callback(new Error('Authentication failed'), false);
-        console.log(`Authentication failed, no email`);
+        console.log(`\x1B[31mAuthentication failed, no email`);
     }
     else //if (username === userDB.email) 
     {
-        if (password === config.DEVICE_PASS && Number(espid)) {  // esp authen
-            addEspid(espid, ic, username);
+        if (password === config.DEVICE_PASS && deviceID) {  // esp authen
+            addEspid(deviceID, username);
             callback(null, true); // Successful authentication
         } else if (clientValidate(password) === userDB.email) {  // web mqtt authen
             callback(null, true); // Successful authentication
         } else {
+            console.log(`\x1B[31mAuthentication failed, password invalid`);
             callback(new Error('Authentication failed'), false);
         }
     }
-    // else {
-    //     callback(new Error('Authentication failed'), false);
-    // }
 }
 
 async function authorizeSub(email) {
@@ -89,7 +87,7 @@ async function authorizeSub(email) {
         const cursor = db.find(query, options);
         // Print a message if no documents were found
         if ((await db.countDocuments(query)) === 0) {
-            console.log("No documents found!");
+            console.log("\x1B[31mNo documents found!");
         }
         const data = await cursor.toArray();
         dataout = data;
@@ -102,20 +100,20 @@ async function authorizeSub(email) {
     return dataout;
 }
 
-async function addEspid(espid, ic, email) {
+async function addEspid(espid, email) {
 
     const uri = "mongodb://localhost:27017";
     const clientmongo = new MongoClient(uri);
     const database = clientmongo.db("database");
     const db = database.collection("espid");
     try {
-        const thisesp = await db.findOne({ espid: Number(espid) });
+        const thisesp = await db.findOne({ espid: espid });
         // console.log("get device: " + thisesp.email);
         if (thisesp && thisesp.email != email) {
-            const result = await db.updateOne({ espid: Number(espid) }, { $set: { email: email } });
+            const result = await db.updateOne({ espid: espid }, { $set: { email: email } });
             console.log(`${result.matchedCount} device matched the filter, updated ${result.modifiedCount} device`,);
         } else if (!thisesp) {
-            const result = await db.insertOne({ espid: Number(espid), email: email, name: 'device-' + espid, ic: ic, time: new Date() });
+            const result = await db.insertOne({ espid: espid, email: email, name: 'Device_' + espid, time: new Date() });
             console.log(`A new device was inserted with the _id: ${result.insertedId}`);
         }
 
