@@ -73,7 +73,7 @@ function startAedes() {
     if (client.id.startsWith("WEB")) {
       espid = client.id.split('_')[1] + "_" + client.id.split('_')[2];
     }
-console.dir(espid);
+    // console.dir(espid);
 
     // if (ic === 'esp8266' || ic === 'esp32') {
     const thisDevice = { email: client._parser.settings.username, espid: espid };

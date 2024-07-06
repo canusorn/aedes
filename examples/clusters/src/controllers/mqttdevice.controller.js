@@ -113,7 +113,7 @@ async function addEspid(espid, email) {
             const result = await db.updateOne({ espid: espid }, { $set: { email: email } });
             console.log(`${result.matchedCount} device matched the filter, updated ${result.modifiedCount} device`,);
         } else if (!thisesp) {
-            const result = await db.insertOne({ espid: espid, email: email, name: 'Device_' + espid, time: new Date() });
+            const result = await db.insertOne({ espid: espid, email: email, name: 'Device-' + espid.split('_')[1], time: new Date() });
             console.log(`A new device was inserted with the _id: ${result.insertedId}`);
         }
 
