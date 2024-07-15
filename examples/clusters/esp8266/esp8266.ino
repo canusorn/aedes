@@ -40,7 +40,7 @@ void connect() {
   String macAddressWithoutColon = macAdd.substring(0, 2) + macAdd.substring(3, 5) + macAdd.substring(6, 8) + macAdd.substring(9, 11) + macAdd.substring(12, 14) + macAdd.substring(15, 17) ;
   String S = "ESP8266-" + String(ESP.getChipId()) + "_" + macAddressWithoutColon;
 
-#elif ESP32
+#elif defined(ESP32)
   for (int i = 0; i < 41; i = i + 8) {
     chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
   }
@@ -58,7 +58,7 @@ void connect() {
   char  CharArray[ArrayLength];
   S.toCharArray(CharArray, ArrayLength);
 
-  while (!client.connect(CharArray, "anusorn1998@gmail.com", "iotbundle")) {
+  while (!client.connect(CharArray, "anusorn1998@gmail.com", "cynoiotbundle")) {
     Serial.print(".");
     delay(1000);
   }

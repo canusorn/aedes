@@ -13,19 +13,27 @@ async function publish(packet, client) {
 
     if (packet.topic.endsWith('/data/update')) {
         // console.table(Buffer.from(packet.payload, 'base64').toString());
-        const datapayload = JSON.parse(Buffer.from(packet.payload, 'base64').toString());
-        datapayload.time = new Date();
+        try {
+            const datapayload = JSON.parse(Buffer.from(packet.payload, 'base64').toString());
+            datapayload.time = new Date();
 
-        const uri = "mongodb://localhost:27017";
-        const clientmongo = new MongoClient(uri);
-        const database = clientmongo.db("timedata");
-        const db = database.collection(client.id);
+            const uri = "mongodb://localhost:27017";
+            const clientmongo = new MongoClient(uri);
+            const database = clientmongo.db("timedata");
+            const db = database.collection(client.id);
 
-        db.insertOne(datapayload)
-            .then(result => {
-                console.log(`A document was inserted with the _id: ${result.insertedId}`);
-                clientmongo.close();
-            });
+            db.insertOne(datapayload)
+                .then(result => {
+                    console.log(`A document was inserted with the _id: ${result.insertedId}`);
+                    clientmongo.close();
+                });
+        } catch (err) {
+            // err
+            console.error("\x1B[31mError json format, ", err.message);
+            return false;
+
+        }
+
     }
 }
 
